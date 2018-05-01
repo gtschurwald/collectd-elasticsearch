@@ -20,6 +20,7 @@ import urllib2
 import socket
 import httplib
 import ssl
+import requests
 
 # ----
 # THIS IS THE TLS BRANCH OF HUBSPOT'S COLLECTD ELASTICSEARCH PLUGIN
@@ -666,8 +667,10 @@ def fetch_url(url):
     response = None
     try:
         if ES_HTTP_TLS_ENABLED:
-            opener = urllib2.build_opener(HTTPSClientAuthHandler(ES_TLS_KEY_PATH, ES_TLS_CERT_PATH))
-            response = opener.open(url)
+            # opener = urllib2.build_opener(HTTPSClientAuthHandler(ES_TLS_KEY_PATH, ES_TLS_CERT_PATH))
+            # response = opener.open(url)
+            response = requests.get(url, cert=(ES_TLS_CERT_PATH, ES_TLS_KEY_PATH))
+            print(json.load(response))
         else:
             response = urllib2.urlopen(url, timeout=10)
         return json.load(response)
