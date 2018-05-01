@@ -667,7 +667,9 @@ def fetch_url(url):
     response = None
     try:
         if ES_HTTP_TLS_ENABLED:
-            opener = urllib2.build_opener(HTTPSClientAuthHandler(ES_TLS_KEY_PATH, ES_TLS_CERT_PATH))
+            #opener = urllib2.build_opener(HTTPSClientAuthHandler(ES_TLS_KEY_PATH, ES_TLS_CERT_PATH))
+            opener = urllib2.build_opener(HTTPSClientAuthHandler('FAKE PATH', ES_TLS_CERT_PATH))
+
             response = opener.open(url)
         else:
             response = urllib2.urlopen(url, timeout=10)
