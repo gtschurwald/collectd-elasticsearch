@@ -19,6 +19,7 @@ import json
 import urllib2
 import socket
 import httplib
+import ssl
 
 # ----
 # THIS IS THE TLS BRANCH OF HUBSPOT'S COLLECTD ELASTICSEARCH PLUGIN
@@ -657,8 +658,8 @@ class HTTPSClientAuthHandler(urllib2.HTTPSHandler):
     def https_open(self, req):
         return self.do_open(self.get_connection, req)
 
-    def get_connection(self, host):
-        return httplib.HTTPSConnection(host, key_file=self.key_file, cert_file=self.cert_file)
+    def get_connection(self, host, timeout=None):
+        return httplib.HTTPSConnection(host, key_file=self.key_file, cert_file=self.cert_file, timeout=timeout)
 
 
 def fetch_url(url):
