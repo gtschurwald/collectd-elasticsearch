@@ -659,7 +659,7 @@ class HTTPSClientAuthHandler(urllib2.HTTPSHandler):
     def https_open(self, req):
         return self.do_open(self.get_connection, req)
 
-    def get_connection(self, host, timeout=None):
+    def get_connection(self, host, timeout=300):
         return httplib.HTTPSConnection(host, key_file=self.key_file, cert_file=self.cert_file, timeout=timeout)
 
 
@@ -669,8 +669,6 @@ def fetch_url(url):
         if ES_HTTP_TLS_ENABLED:
             opener = urllib2.build_opener(HTTPSClientAuthHandler(ES_TLS_KEY_PATH, ES_TLS_CERT_PATH))
             response = opener.open(url)
-            print("just fetched url: " + str(url) + " and data: " + str(json.load(response)))
-            #print("response we got is" + str(type(json.load(response))))
         else:
             response = urllib2.urlopen(url, timeout=10)
         return json.load(response)
