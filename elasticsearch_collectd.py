@@ -20,6 +20,10 @@ import urllib2
 import socket
 import httplib
 
+# ----
+# THIS IS THE TLS BRANCH OF HUBSPOT'S COLLECTD ELASTICSEARCH PLUGIN
+# ----
+
 PREFIX = "elasticsearch"
 ES_CLUSTER = "elasticsearch"
 ES_HOST = "localhost"
