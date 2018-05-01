@@ -17,6 +17,17 @@
 import collections
 import json
 import urllib2
+<<<<<<< HEAD
+=======
+import socket
+import httplib
+import ssl
+import requests
+
+# ----
+# THIS IS THE TLS BRANCH OF HUBSPOT'S COLLECTD ELASTICSEARCH PLUGIN
+# ----
+>>>>>>> tls
 
 PREFIX = "elasticsearch"
 ES_CLUSTER = "elasticsearch"
@@ -626,6 +637,20 @@ def fetch_stats():
             indexes_json_stats = indicies['indices']
             for index_name in indexes_json_stats.keys():
                 parse_index_stats(indexes_json_stats[index_name], index_name)
+
+
+# SSL requests wrapper
+class HTTPSClientAuthHandler(urllib2.HTTPSHandler):
+    def __init__(self, key_file, cert_file):
+        urllib2.HTTPSHandler.__init__(self)
+        self.key_file = key_file
+        self.cert_file = cert_file
+
+    def https_open(self, req):
+        return self.do_open(self.get_connection, req)
+
+    def get_connection(self, host, timeout=300):
+        return httplib.HTTPSConnection(host, key_file=self.key_file, cert_file=self.cert_file, timeout=timeout)
 
 
 def fetch_url(url):
