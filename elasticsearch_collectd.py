@@ -662,7 +662,8 @@ def fetch_url(url):
     try:
         if ES_HTTP_TLS_ENABLED:
             opener = urllib2.build_opener(HTTPSClientAuthHandler(ES_TLS_KEY_PATH, ES_TLS_CERT_PATH))
-            response = opener.open(url)
+            response = opener.open(url, timeout=10)
+            opener.close()
         else:
             response = urllib2.urlopen(url, timeout=10)
         return json.load(response)
