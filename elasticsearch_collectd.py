@@ -679,7 +679,7 @@ def fetch_url(es_url):
     if ES_HTTP_TLS_ENABLED:
         try:
             opener = urllib2.build_opener(HTTPSClientAuthHandler(ES_TLS_KEY_PATH, ES_TLS_CERT_PATH))
-            tls_response = opener.open(es_url.get_auth_url())
+            tls_response = opener.open(es_url.get_auth_url(), timeout=10)
             return json.load(tls_response)
         except urllib2.URLError, e:
             # If the https request failed, catch the error but store for future logging
