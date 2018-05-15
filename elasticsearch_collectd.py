@@ -665,7 +665,7 @@ class HTTPSClientAuthHandler(urllib2.HTTPSHandler):
     def https_open(self, req):
         return self.do_open(self.get_connection, req)
 
-    def get_connection(self, host, timeout=300):
+    def get_connection(self, host, timeout=10):
         return httplib.HTTPSConnection(host, key_file=self.key_file, cert_file=self.cert_file, timeout=timeout)
 
 
@@ -679,7 +679,7 @@ def fetch_url(es_url):
     if ES_HTTP_TLS_ENABLED:
         try:
             opener = urllib2.build_opener(HTTPSClientAuthHandler(ES_TLS_KEY_PATH, ES_TLS_CERT_PATH))
-            tls_response = opener.open(es_url.get_auth_url, timeout=10)
+            tls_response = opener.open(es_url.get_auth_url)
             return json.load(tls_response)
         except urllib2.URLError, e:
             # If the https request failed, catch the error but store for future logging
