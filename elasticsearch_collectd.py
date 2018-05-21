@@ -671,7 +671,8 @@ class HTTPSClientAuthHandler(urllib2.HTTPSHandler):
         return httplib.HTTPSConnection(host, key_file=self.key_file, cert_file=self.cert_file, timeout=timeout)
 
 
-def fetch_url(es_url):
+#TODO remove eventually
+def fetch_url_old(es_url):
     # If tls is enabled, try doing an http request, but catch an exception so we can attempt a non-tls request
     # This is needed for migrating a cluster from http->https as tls will be enabled on some nodes that are running
     # es without authenticated http requests
@@ -705,7 +706,7 @@ def fetch_url(es_url):
             non_tls_response.close()
 
 
-def fetch_url_no_flag(es_url):
+def fetch_url(es_url):
     # Attempts to fetch both encrypted endpoint and unencrypted, regardless of flag
     # The config flag for http auth is not always indicative of the actual state of the auth plugin on the node
 
