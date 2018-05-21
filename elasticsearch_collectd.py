@@ -755,9 +755,24 @@ def load_es_version():
 
 
 def dispatch_is_http_tls_enabled():
+    tls_response = None
+    is_tls_enabled = 0
+    es_url = ElasticsearchRequestUrl('/_cluster/health')
+
+    try:
+        opener = urllib2.build_opener(HTTPSClientAuthHandler(ES_TLS_KEY_PATH, ES_TLS_CERT_PATH))
+        tls_response = opener.open(es_url.get_auth_url(), timeout=10)
+        is_tls_enabled = 1
+    except urllib2.URLError, e:
+        # If the https request failed, it means non-tls is enabled so we can ignore
+        pass
+    finally:
+        if tls_response is not None:
+            tls_response.close()
+
     # Custom stat to measure whether HTTP auth is enabled. Will be set based on success of http request
-    http_tls_stat = Stat("gauge", "nodes.%s.http.auth.enabled"),
-    dispatch_stat(0, 'node.http.auth.enabled', http_tls_stat)
+    http_tls_stat = Stat("gauge", "nodes.%s.http.auth.enabled")
+    dispatch_stat(is_tls_enabled, 'node.http.auth.enabled', http_tls_stat)
 
 
 def parse_node_stats(json, stats):
