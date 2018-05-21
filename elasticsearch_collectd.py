@@ -637,6 +637,8 @@ def fetch_stats():
     """
     global ES_CLUSTER
 
+    dispatch_is_http_tls_enabled()
+
     node_json_stats = fetch_url(ES_NODE_URL)
     if node_json_stats:
         ES_CLUSTER = node_json_stats['cluster_name']
@@ -703,6 +705,38 @@ def fetch_url(es_url):
             non_tls_response.close()
 
 
+def fetch_url_no_flag(es_url):
+    # Attempts to fetch both encrypted endpoint and unencrypted, regardless of flag
+    # The config flag for http auth is not always indicative of the actual state of the auth plugin on the node
+
+    tls_response = None
+    non_tls_response = None
+
+    try:
+        opener = urllib2.build_opener(HTTPSClientAuthHandler(ES_TLS_KEY_PATH, ES_TLS_CERT_PATH))
+        tls_response = opener.open(es_url.get_auth_url(), timeout=10)
+        return json.load(tls_response)
+    except urllib2.URLError, e:
+        # If the https request failed, catch the error but store for future logging
+        tls_request_error = e
+        try:
+            non_tls_response = urllib2.urlopen(es_url.get_non_auth_url(), timeout=10)
+            return json.load(non_tls_response)
+        except urllib2.URLError, e:
+            if tls_request_error is not None:
+                collectd.error(
+                    'elasticsearch plugin, error connecting to tls url: %s - %r, error connecting to non-tls url: %s - %r'
+                    % (es_url.get_auth_url(), tls_request_error, es_url.get_non_auth_url(), e))
+            else:
+                collectd.error('elasticsearch plugin: Error connecting to %s - %r' % (es_url.get_non_auth_url(), e))
+            return None
+        finally:
+            if non_tls_response is not None:
+                non_tls_response.close()
+    finally:
+        if tls_response is not None:
+            tls_response.close()
+
 def load_es_version():
     global ES_VERSION
     if ES_VERSION is None:
@@ -718,6 +752,12 @@ def load_es_version():
                 ES_VERSION)
 
     return ES_VERSION
+
+
+def dispatch_is_http_tls_enabled():
+    # Custom stat to measure whether HTTP auth is enabled. Will be set based on success of http request
+    http_tls_stat = Stat("gauge", "nodes.%s.http.auth.enabled"),
+    dispatch_stat(0, 'node.http.auth.enabled', http_tls_stat)
 
 
 def parse_node_stats(json, stats):
