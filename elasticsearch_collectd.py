@@ -671,41 +671,6 @@ class HTTPSClientAuthHandler(urllib2.HTTPSHandler):
         return httplib.HTTPSConnection(host, key_file=self.key_file, cert_file=self.cert_file, timeout=timeout)
 
 
-#TODO remove eventually
-def fetch_url_old(es_url):
-    # If tls is enabled, try doing an http request, but catch an exception so we can attempt a non-tls request
-    # This is needed for migrating a cluster from http->https as tls will be enabled on some nodes that are running
-    # es without authenticated http requests
-    tls_request_error = None
-    tls_response = None
-    non_tls_response = None
-    if ES_HTTP_TLS_ENABLED:
-        try:
-            opener = urllib2.build_opener(HTTPSClientAuthHandler(ES_TLS_KEY_PATH, ES_TLS_CERT_PATH))
-            tls_response = opener.open(es_url.get_auth_url(), timeout=10)
-            return json.load(tls_response)
-        except urllib2.URLError, e:
-            # If the https request failed, catch the error but store for future logging
-            tls_request_error = e
-        finally:
-            if tls_response is not None:
-                tls_response.close()
-    try:
-        non_tls_response = urllib2.urlopen(es_url.get_non_auth_url(), timeout=10)
-        return json.load(non_tls_response)
-    except urllib2.URLError, e:
-        if tls_request_error is not None:
-             collectd.error(
-                 'elasticsearch plugin, error connecting to tls url: %s - %r, error connecting to non-tls url: %s - %r'
-                 % (es_url.get_auth_url(), tls_request_error, es_url.get_non_auth_url(), e))
-        else:
-            collectd.error('elasticsearch plugin: Error connecting to %s - %r' % (es_url.get_non_auth_url(), e))
-        return None
-    finally:
-        if non_tls_response is not None:
-            non_tls_response.close()
-
-
 def fetch_url(es_url):
     # Attempts to fetch both encrypted endpoint and unencrypted, regardless of flag
     # The config flag for http auth is not always indicative of the actual state of the auth plugin on the node
@@ -717,9 +682,8 @@ def fetch_url(es_url):
         opener = urllib2.build_opener(HTTPSClientAuthHandler(ES_TLS_KEY_PATH, ES_TLS_CERT_PATH))
         tls_response = opener.open(es_url.get_auth_url(), timeout=10)
         return json.load(tls_response)
-    except urllib2.URLError, e:
+    except urllib2.URLError, tls_request_error:
         # If the https request failed, catch the error but store for future logging
-        tls_request_error = e
         try:
             non_tls_response = urllib2.urlopen(es_url.get_non_auth_url(), timeout=10)
             return json.load(non_tls_response)
@@ -728,7 +692,6 @@ def fetch_url(es_url):
                 collectd.error(
                     'elasticsearch plugin, error connecting to tls url: %s - %r, error connecting to non-tls url: %s - %r'
                     % (es_url.get_auth_url(), tls_request_error, es_url.get_non_auth_url(), e))
-            else:
                 collectd.error('elasticsearch plugin: Error connecting to %s - %r' % (es_url.get_non_auth_url(), e))
             return None
         finally:
@@ -737,6 +700,7 @@ def fetch_url(es_url):
     finally:
         if tls_response is not None:
             tls_response.close()
+
 
 def load_es_version():
     global ES_VERSION
@@ -772,7 +736,6 @@ def dispatch_is_http_tls_enabled():
             tls_response.close()
 
     # Custom stat to measure whether HTTP auth is enabled. Will be set based on success of http request
-    print("status of http auth is %s" % is_tls_enabled)
     http_tls_stat = Stat("gauge", "nodes.%s.http.auth.enabled")
     dispatch_stat(is_tls_enabled, 'node.http.auth.enabled', http_tls_stat)
 
