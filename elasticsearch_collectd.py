@@ -771,6 +771,7 @@ def dispatch_is_http_tls_enabled():
             tls_response.close()
 
     # Custom stat to measure whether HTTP auth is enabled. Will be set based on success of http request
+    print("status of http auth is %s" % is_tls_enabled)
     http_tls_stat = Stat("gauge", "nodes.%s.http.auth.enabled")
     dispatch_stat(is_tls_enabled, 'node.http.auth.enabled', http_tls_stat)
 
